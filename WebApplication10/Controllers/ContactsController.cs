@@ -5,7 +5,9 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using WebApplication10.DataDB;
+using Gproject.DataDB;
+//using Gproject.Bll_Dal;
+using Gproject.Interfaces;
 
 namespace WebApplication10.Controllers
 {
@@ -13,62 +15,42 @@ namespace WebApplication10.Controllers
     [ApiController]
     public class ContactsController : ControllerBase
     {
-        private readonly DataProjectContext _context;
+        private IContacts _contactsService;
 
-
-        public ContactsController(DataProjectContext context)
+        public ContactsController(IContacts contactsService)
         {
-            _context = context;
+           _contactsService = contactsService;
         }
 
         // GET: api/Contacts  get all contacts
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Contact>>> GetContacts()
         {
-            return await _context.Contacts.ToListAsync();
+            return Ok(await _contactsService.GetAllContacts());
         }
 
         // GET: api/Contacts/5   get contact by id
         [HttpGet("{id}")]
         public async Task<ActionResult<Contact>> GetContactById(int id)
         {
-            var contact = await _context.Contacts.FindAsync(id);
+            var contact =  await _contactsService.GetContactById(id);
 
-            if (contact == null)
-            {
-                return NotFound();
-            }
-
-            return contact;
+            return contact == null ? NotFound() : Ok(contact);
         }
 
-        // PUT: api/Contacts/5 update the contact by id 
+        //// PUT: api/Contacts/5 update the contact by id 
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateContact(int id, Contact contact)
         {
-            if (id != contact.IdContacts)
-            {
-                return BadRequest();
-            }
-
-            _context.Entry(contact).State = EntityState.Modified;
-
             try
             {
-                await _context.SaveChangesAsync();
+                await _contactsService.UpdateContact(id, contact);
             }
             catch (DbUpdateConcurrencyException)
             {
-                if (!ContactExists(id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
-            }
 
+                throw new Exception("This it not upDate ");
+            }
             return NoContent();
         }
 
@@ -76,45 +58,38 @@ namespace WebApplication10.Controllers
         [HttpPost]
         public async Task<ActionResult<Contact>> AddContact(Contact contact)
         {
-            _context.Contacts.Add(contact);
+
             try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateException)
-            {
-                if (ContactExists(contact.IdContacts))
+            { 
+                ActionResult<Contact> contactRes = await _contactsService.AddContact(contact);
+      
+                if (contactRes == null)
                 {
                     return Conflict();
                 }
-                else
-                {
-                    throw;
-                }
+                return CreatedAtAction("AddContact", new { id = contact.IdContacts }, contact);
             }
-
-            return CreatedAtAction("GetContact", new { id = contact.IdContacts }, contact);
+            catch (DbUpdateException)
+            {
+                return BadRequest("Not successful to Add");
+            }
         }
 
-        // DELETE: api/Contacts/5
+        // DELETE: api/Contacts/5 delete by id 
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteContact(int id)
         {
-            var contact = await _context.Contacts.FindAsync(id);
-            if (contact == null)
+            try
             {
-                return NotFound();
+                await _contactsService.DeleteContact(id);
+
             }
-
-            _context.Contacts.Remove(contact);
-            await _context.SaveChangesAsync();
-
+            catch (DbUpdateException)
+            {
+                return BadRequest("not succefull to delete");
+            }
             return NoContent();
         }
 
-        private bool ContactExists(int id)
-        {
-            return _context.Contacts.Any(e => e.IdContacts == id);
-        }
     }
 }

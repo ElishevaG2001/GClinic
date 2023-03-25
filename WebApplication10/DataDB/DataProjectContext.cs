@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore.Metadata;
 
 #nullable disable
 
-namespace WebApplication10.DataDB
+namespace Gproject.DataDB
 {
     public partial class DataProjectContext : DbContext
     {

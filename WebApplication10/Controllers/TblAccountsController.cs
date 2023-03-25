@@ -6,21 +6,20 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using WebApplication10.DataDB;
+using WebApplication10;
+using Gproject.DataDB;
 
 namespace WebApplication10.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
     [Authorize (Policy = "1")]
-
-
-
+        
     public class TblAccountsController : ControllerBase
     {
         private readonly DataProjectContext _context;
 
-        public TblAccountsController(DataProjectContext context)
+        public TblAccountsController(DataProjectContext context)    
         {
             _context = context;
         }
