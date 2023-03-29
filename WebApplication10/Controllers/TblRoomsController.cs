@@ -6,6 +6,8 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Gproject.DataDB;
+using Gproject.Interfaces;
+using Gproject.Services;
 
 namespace WebApplication10.Controllers
 {
@@ -13,109 +15,78 @@ namespace WebApplication10.Controllers
     [ApiController]
     public class TblRoomsController : ControllerBase
     {
-        private readonly DataProjectContext _context;
+        private readonly IRoom  _roomService;
 
-        public TblRoomsController(DataProjectContext context)
+        public TblRoomsController(IRoom roomService)
         {
-            _context = context;
+            _roomService = roomService;
         }
 
         // GET: api/TblRooms
         [HttpGet]
         public async Task<ActionResult<IEnumerable<TblRoom>>> GetTblRooms()
         {
-            return await _context.TblRooms.ToListAsync();
+            return await _roomService.GetAllRooms();
         }
 
         // GET: api/TblRooms/5
         [HttpGet("{id}")]
         public async Task<ActionResult<TblRoom>> GetTblRoom(int id)
         {
-            var tblRoom = await _context.TblRooms.FindAsync(id);
+            var room = await _roomService.GetRoomById(id);
+            return room == null ? NotFound() : Ok(room);
 
-            if (tblRoom == null)
-            {
-                return NotFound();
-            }
-
-            return tblRoom;
         }
 
         // PUT: api/TblRooms/5
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutTblRoom(int id, TblRoom tblRoom)
+        public async Task<IActionResult> UpdateRoom(int id, TblRoom room)
         {
-            if (id != tblRoom.IdRoom)
-            {
-                return BadRequest();
-            }
-
-            _context.Entry(tblRoom).State = EntityState.Modified;
-
             try
             {
-                await _context.SaveChangesAsync();
+                await _roomService.UpdateRoom(id, room);
             }
             catch (DbUpdateConcurrencyException)
             {
-                if (!TblRoomExists(id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
+                throw new Exception("This it not upDate ");
             }
 
             return NoContent();
         }
 
         // POST: api/TblRooms
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
-        public async Task<ActionResult<TblRoom>> PostTblRoom(TblRoom tblRoom)
+        public async Task<ActionResult<TblRoom>> AddRoom(TblRoom room)
         {
-            _context.TblRooms.Add(tblRoom);
             try
             {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateException)
-            {
-                if (TblRoomExists(tblRoom.IdRoom))
+                ActionResult<TblRoom> roomRes = await _roomService.AddRoom(room);
+
+                if (roomRes == null)
                 {
                     return Conflict();
                 }
-                else
-                {
-                    throw;
-                }
+                return CreatedAtAction("AddRoom", new { id = room.IdRoom }, room);
             }
-
-            return CreatedAtAction("GetTblRoom", new { id = tblRoom.IdRoom }, tblRoom);
+            catch (DbUpdateException)
+            {
+                return BadRequest("Not successful to Add");
+            }
         }
 
         // DELETE: api/TblRooms/5
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteTblRoom(int id)
         {
-            var tblRoom = await _context.TblRooms.FindAsync(id);
-            if (tblRoom == null)
+            try
             {
-                return NotFound();
+                await _roomService.DeleteRoom(id);
             }
-
-            _context.TblRooms.Remove(tblRoom);
-            await _context.SaveChangesAsync();
-
+            catch (DbUpdateException)
+            {
+                return BadRequest("not succefull to delete");
+            }
             return NoContent();
-        }
-
-        private bool TblRoomExists(int id)
-        {
-            return _context.TblRooms.Any(e => e.IdRoom == id);
         }
     }
 }

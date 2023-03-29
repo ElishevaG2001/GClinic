@@ -19,7 +19,6 @@ namespace Gproject.Services
         {
 
             _context = context;
-
         }
 
         [HttpGet]
@@ -92,7 +91,7 @@ namespace Gproject.Services
 
             _context.Entry(contact).State = EntityState.Modified;
 
-            await _context.SaveChangesAsync();
+             await _context.SaveChangesAsync();
          
             return contact;
         }

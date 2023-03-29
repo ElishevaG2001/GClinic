@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Gproject.DataDB;
+using Gproject.Interfaces;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -13,108 +14,79 @@ namespace WebApplication10.Controllers
     [ApiController]
     public class TblEmployeesController : ControllerBase
     {
-        private readonly DataProjectContext _context;
 
-        public TblEmployeesController(DataProjectContext context)
+        private readonly IEmployees _employeeService;
+
+        public TblEmployeesController(IEmployees employeeService)
         {
-            _context = context;
+            _employeeService = employeeService;
         }
 
         // GET: api/TblEmployees 
         [HttpGet]
         public async Task<ActionResult<IEnumerable<TblEmployee>>> GetAllTblEmployees()
-        { 
-                 return await _context.TblEmployees.ToListAsync();
+        {
+            return Ok(await _employeeService.GetAllTblEmployees());
         }
 
         // GET: api/TblEmployees/5  - by id 
         [HttpGet("{id}")]
         public async Task<ActionResult<TblEmployee>> GetTblEmployeeById(int id)
         {
-            var tblEmployee = await _context.TblEmployees.FindAsync(id);
+            var employee = await _employeeService.GetTblEmployeeById(id);
 
-            if (tblEmployee == null)
-            {
-                return NotFound();
-            }
-
-            return tblEmployee;
+            return employee == null ? NotFound() : Ok(employee);
         }
 
         // PUT: api/TblEmployees/5  update employee by id 
         [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateTblEmployee(int id, TblEmployee tblEmployee)
+        public async Task<IActionResult> UpdateTblEmployee(int id, TblEmployee employee)
         {
-            if (id != tblEmployee.IdEmployee)
-            {
-                return BadRequest("no");
-            }
-
-            _context.Entry(tblEmployee).State = EntityState.Modified;
-
             try
             {
-                //save the changes
-                await _context.SaveChangesAsync();
+                await _employeeService.UpdateTblEmployee(id, employee);
             }
             catch (DbUpdateConcurrencyException)
             {
-                if (!TblEmployeeExists(id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
+                throw new Exception("The Employee is not Update!!!");
             }
             return NoContent();
         }
 
         // POST: api/TblEmployees  add new employee
         [HttpPost]
-        public async Task<ActionResult<TblEmployee>> AddTblEmployee(TblEmployee tblEmployee)
+        public async Task<ActionResult<TblEmployee>> AddEmployee(TblEmployee employee)
         {
-
-            _context.TblEmployees.Add(tblEmployee);
             try
             {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateException)
-            {
-                if (TblEmployeeExists(tblEmployee.IdEmployee))
+                ActionResult<TblEmployee> employeeRes = await _employeeService.AddTblEmployee(employee);
+                if (employeeRes == null)
                 {
                     return Conflict();
                 }
-                else
-                {
-                    throw;
-                }
+                return CreatedAtAction("AddEmployee", new { id = employee.IdEmployee }, employee);
             }
+            catch (DbUpdateException)
+            {
+                return BadRequest("Not successful to Add");
 
-            return CreatedAtAction("AddTblEmployee", new { id = tblEmployee.IdEmployee }, tblEmployee);
+            }
         }
 
         // DELETE: api/TblEmployees/5  delete employee by id
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteTblEmployee(int id)
         {
-            var tblEmployee = await _context.TblEmployees.FindAsync(id);
-            if (tblEmployee == null)
+            try
             {
-                return NotFound();
+                await _employeeService.DeleteTblEmployee(id);
             }
 
-            _context.TblEmployees.Remove(tblEmployee);
-            await _context.SaveChangesAsync();
-
+            catch (DbUpdateException)
+            {
+                return BadRequest("not succefull to delete");
+            }
             return NoContent();
-        }
-
-        private bool TblEmployeeExists(int id)
-        {
-            return _context.TblEmployees.Any(e => e.IdEmployee == id);
         }
     }
 }

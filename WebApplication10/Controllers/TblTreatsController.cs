@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Gproject.DataDB;
+using Gproject.Interfaces;
 
 namespace WebApplication10.Controllers
 {
@@ -13,109 +14,80 @@ namespace WebApplication10.Controllers
     [ApiController]
     public class TblTreatsController : ControllerBase
     {
-        private readonly DataProjectContext _context;
+        private ITreats _treatService;
 
-        public TblTreatsController(DataProjectContext context)
+        public TblTreatsController(ITreats treatService)
         {
-            _context = context;
+            _treatService = treatService;
         }
 
-        // GET: api/TblTreats
+        // GET: api/Contacts  get all treats
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<TblTreat>>> GetTblTreats()
+        public async Task<ActionResult<IEnumerable<TblTreat>>> GetTreats()
         {
-            return await _context.TblTreats.ToListAsync();
+            return Ok(await _treatService.GetAllTreats());
         }
 
-        // GET: api/TblTreats/5
+        // GET: api/Contacts/5   get treat by id
         [HttpGet("{id}")]
-        public async Task<ActionResult<TblTreat>> GetTblTreat(int id)
+        public async Task<ActionResult<TblTreat>> GetTreatById(int id)
         {
-            var tblTreat = await _context.TblTreats.FindAsync(id);
+            var treat = await _treatService.GettTreatById(id);
 
-            if (tblTreat == null)
-            {
-                return NotFound();
-            }
-
-            return tblTreat;
+            return treat == null ? NotFound() : Ok(treat);
         }
 
-        // PUT: api/TblTreats/5
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
+        //// PUT: api/Contacts/5 update the treat by id 
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutTblTreat(int id, TblTreat tblTreat)
+        public async Task<IActionResult> UpdateTreat(int id, TblTreat treat)
         {
-            if (id != tblTreat.IdTreat)
-            {
-                return BadRequest();
-            }
-
-            _context.Entry(tblTreat).State = EntityState.Modified;
-
             try
             {
-                await _context.SaveChangesAsync();
+                await _treatService.UpdateTreat(id, treat);
             }
             catch (DbUpdateConcurrencyException)
             {
-                if (!TblTreatExists(id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
-            }
 
+                throw new Exception("This it not upDate ");
+            }
             return NoContent();
         }
 
-        // POST: api/TblTreats
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
+        // POST: api/Contacts   add new treat
         [HttpPost]
-        public async Task<ActionResult<TblTreat>> PostTblTreat(TblTreat tblTreat)
+        public async Task<ActionResult<Contact>> AddTreat(TblTreat treat)
         {
-            _context.TblTreats.Add(tblTreat);
+
             try
             {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateException)
-            {
-                if (TblTreatExists(tblTreat.IdTreat))
+                ActionResult<TblTreat> treattRes = await _treatService.AddTreat(treat);
+
+                if (treattRes == null)
                 {
                     return Conflict();
                 }
-                else
-                {
-                    throw;
-                }
+                return CreatedAtAction("AddTreat", new { id = treat.IdTreat }, treat);
             }
-
-            return CreatedAtAction("GetTblTreat", new { id = tblTreat.IdTreat }, tblTreat);
-        }
-
-        // DELETE: api/TblTreats/5
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteTblTreat(int id)
-        {
-            var tblTreat = await _context.TblTreats.FindAsync(id);
-            if (tblTreat == null)
+            catch (DbUpdateException)
             {
-                return NotFound();
+                return BadRequest("Not successful to Add");
             }
-
-            _context.TblTreats.Remove(tblTreat);
-            await _context.SaveChangesAsync();
-
-            return NoContent();
         }
 
-        private bool TblTreatExists(int id)
+        // DELETE: api/Contacts/5 delete by id 
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteTreat(int id)
         {
-            return _context.TblTreats.Any(e => e.IdTreat == id);
+            try
+            {
+                await _treatService.DeleteTreat(id);
+
+            }
+            catch (DbUpdateException)
+            {
+                return BadRequest("not succefull to delete");
+            }
+            return NoContent();
         }
     }
 }

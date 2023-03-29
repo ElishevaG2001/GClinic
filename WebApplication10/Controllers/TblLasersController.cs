@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Gproject.DataDB;
+using Gproject.Interfaces;
 
 namespace WebApplication10.Controllers
 {
@@ -13,109 +14,79 @@ namespace WebApplication10.Controllers
     [ApiController]
     public class TblLasersController : ControllerBase
     {
-        private readonly DataProjectContext _context;
 
-        public TblLasersController(DataProjectContext context)
+        private readonly ILasers _laserService;
+
+        public TblLasersController(ILasers laserService)
         {
-            _context = context;
+            _laserService = laserService;
         }
 
-        // GET: api/TblLasers
+        // GET: api/Laser
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<TblLaser>>> GetTblLasers()
+        public async Task<ActionResult<IEnumerable<TblLaser>>> GetLasers()
         {
-            return await _context.TblLasers.ToListAsync();
+            return await _laserService.GetAllLasers();
         }
 
-        // GET: api/TblLasers/5
+        // GET: api/TblLaser/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<TblLaser>> GetTblLaser(int id)
+        public async Task<ActionResult<TblLaser>> GetLaserByID(int id)
         {
-            var tblLaser = await _context.TblLasers.FindAsync(id);
+            var laser = await _laserService.GetLaserById(id);
+            return laser == null ? NotFound() : Ok(laser);
 
-            if (tblLaser == null)
-            {
-                return NotFound();
-            }
-
-            return tblLaser;
         }
 
-        // PUT: api/TblLasers/5
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
+        // PUT: api/TblLaser/5
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutTblLaser(int id, TblLaser tblLaser)
+        public async Task<IActionResult> UpdateLaser(int id, TblLaser laser)
         {
-            if (id != tblLaser.IdLaser)
-            {
-                return BadRequest();
-            }
-
-            _context.Entry(tblLaser).State = EntityState.Modified;
-
             try
             {
-                await _context.SaveChangesAsync();
+                await _laserService.UpdateLaser(id, laser);
             }
             catch (DbUpdateConcurrencyException)
             {
-                if (!TblLaserExists(id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
+                throw new Exception("This it not upDate ");
             }
 
             return NoContent();
         }
 
-        // POST: api/TblLasers
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
+        // POST: api/TblLaser
         [HttpPost]
-        public async Task<ActionResult<TblLaser>> PostTblLaser(TblLaser tblLaser)
+        public async Task<ActionResult<TblLaser>> AddLaser(TblLaser laser)
         {
-            _context.TblLasers.Add(tblLaser);
             try
             {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateException)
-            {
-                if (TblLaserExists(tblLaser.IdLaser))
+                ActionResult<TblLaser> laserRes = await _laserService.AddLaser(laser);
+
+                if (laserRes == null)
                 {
                     return Conflict();
                 }
-                else
-                {
-                    throw;
-                }
+                return CreatedAtAction("AddLaser", new { id = laser.IdLaser }, laser);
             }
-
-            return CreatedAtAction("GetTblLaser", new { id = tblLaser.IdLaser }, tblLaser);
-        }
-
-        // DELETE: api/TblLasers/5
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteTblLaser(int id)
-        {
-            var tblLaser = await _context.TblLasers.FindAsync(id);
-            if (tblLaser == null)
+            catch (DbUpdateException)
             {
-                return NotFound();
+                return BadRequest("Not successful to Add");
             }
-
-            _context.TblLasers.Remove(tblLaser);
-            await _context.SaveChangesAsync();
-
-            return NoContent();
         }
 
-        private bool TblLaserExists(int id)
+        // DELETE: api/TblLaser/5
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteLaser(int id)
         {
-            return _context.TblLasers.Any(e => e.IdLaser == id);
+            try
+            {
+                await _laserService.DeleteLaser(id);
+            }
+            catch (DbUpdateException)
+            {
+                return BadRequest("not succefull to delete");
+            }
+            return NoContent();
         }
     }
 }

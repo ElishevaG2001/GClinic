@@ -8,121 +8,104 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using WebApplication10;
 using Gproject.DataDB;
+using Gproject.Interfaces;
+using System.ComponentModel;
 
 namespace WebApplication10.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize (Policy = "1")]
+    //[Authorize (Policy = "1")]
         
     public class TblAccountsController : ControllerBase
     {
-        private readonly DataProjectContext _context;
+        private IAccounts _accountService;
 
-        public TblAccountsController(DataProjectContext context)    
+        public TblAccountsController(IAccounts accountService)
         {
-            _context = context;
+            _accountService = accountService;
         }
 
-        // GET: api/TblAccounts
+        // GET: api/Account  get all accounts
         [HttpGet]
-
-        public async Task<ActionResult<IEnumerable<TblAccount>>> GetTblAccounts()
+        public async Task<ActionResult<IEnumerable<TblAccount>>> GetAccounts()
         {
-            //return await _context.TblAccounts.ToListAsync();
-            return null;
-
+            return Ok(await _accountService.GetAllAccounts());
         }
 
-        // GET: api/TblAccounts/5
+        // GET: api/Account/5   get account by id
         [HttpGet("{id}")]
-        public async Task<ActionResult<TblAccount>> GetTblAccount(int id)
+        public async Task<ActionResult<TblAccount>> GetAccountById(int id)
         {
-            var tblAccount = await _context.TblAccounts.FindAsync(id);
+            var account = await _accountService.GettAccountById(id);
 
-            if (tblAccount == null)
-            {
-                return NotFound();
-            }
-
-            return tblAccount;
+            return account == null ? NotFound() : Ok(account);
         }
 
-        // PUT: api/TblAccounts/5
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
+        //// PUT: api/Account/5 update the account by id 
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutTblAccount(int id, TblAccount tblAccount)
+        public async Task<IActionResult> UpdateAccount(int id, TblAccount account)
         {
-            if (id != tblAccount.IdAccount)
-            {
-                return BadRequest();
-            }
-
-            _context.Entry(tblAccount).State = EntityState.Modified;
-
             try
             {
-                await _context.SaveChangesAsync();
+                await _accountService.UpdateAccount(id, account);
             }
             catch (DbUpdateConcurrencyException)
             {
-                if (!TblAccountExists(id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
-            }
 
+                throw new Exception("This it not upDate ");
+            }
             return NoContent();
         }
 
-        // POST: api/TblAccounts
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
+        // POST: api/Account   add new account
         [HttpPost]
-        public async Task<ActionResult<TblAccount>> PostTblAccount(TblAccount tblAccount)
+        public async Task<ActionResult<Contact>> AddAccount(TblAccount account)
         {
-            _context.TblAccounts.Add(tblAccount);
             try
             {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateException)
-            {
-                if (TblAccountExists(tblAccount.IdAccount))
+                ActionResult<TblAccount> accountRes = await _accountService.AddAccount(account);
+
+                if (accountRes == null)
                 {
                     return Conflict();
                 }
-                else
-                {
-                    throw;
-                }
+                return CreatedAtAction("AddAccount", new { id = account.IdAccount }, account);
             }
-
-            return CreatedAtAction("GetTblAccount", new { id = tblAccount.IdAccount }, tblAccount);
+            catch (DbUpdateException)
+            {
+                return BadRequest("Not successful to Add");
+            }
         }
 
-        // DELETE: api/TblAccounts/5
+        // DELETE: api/Account/5 delete by id 
         [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteTblAccount(int id)
+        public async Task<IActionResult> DeleteAccount(int id)
         {
-            var tblAccount = await _context.TblAccounts.FindAsync(id);
-            if (tblAccount == null)
+            try
             {
-                return NotFound();
+                await _accountService.DeleteAccount(id);
+
             }
-
-            _context.TblAccounts.Remove(tblAccount);
-            await _context.SaveChangesAsync();
-
+            catch (DbUpdateException)
+            {
+                return BadRequest("not succefull to delete");
+            }
             return NoContent();
         }
 
-        private bool TblAccountExists(int id)
+        [HttpGet("{day}")]
+        public   async Task<int> GetAccountTotalDay(DateTime day)
         {
-            return _context.TblAccounts.Any(e => e.IdAccount == id);
+            try
+            {
+                int totatl = await _accountService.GetAccountTotalDay(day);
+                return totatl;
+            }
+            catch (DbUpdateException)
+            {
+                throw new Exception("eeeroooeeee");
+            }
         }
     }
 }
