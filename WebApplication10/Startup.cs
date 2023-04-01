@@ -71,15 +71,12 @@ namespace WebApplication10
             services.AddScoped<Gproject.Interfaces.IEmployees, Gproject.Services.EmployeesService>();
             //services.AddScoped<Gproject.Interfaces.IAppointments, Gproject.Services.AppointmentsService>();
             services.AddScoped<Gproject.Interfaces.IAccounts, Gproject.Services.AccountsService>();
-            //services.AddScoped<Gproject.Interfaces.IInquiries, Gproject.Services.IinquiriesService>();
-            //services.AddScoped<Gproject.Interfaces.ILasers, Gproject.Services.LasersService>();
+            services.AddScoped<Gproject.Interfaces.IInquiries, Gproject.Services.IinquiriesService>();
+            services.AddScoped<Gproject.Interfaces.ILasers, Gproject.Services.LasersService>();
             services.AddScoped<Gproject.Interfaces.IRoom, Gproject.Services.RoomsService>();
-            //services.AddScoped<Gproject.Interfaces.ISpecialEvents, Gproject.Services.SpecialEvensService>();
+            services.AddScoped<Gproject.Interfaces.ISpecialEvents, Gproject.Services.SpecialEvensService>();
             services.AddScoped<Gproject.Interfaces.ITreats, Gproject.Services.TreatsService>();
             services.AddScoped<Gproject.Interfaces.IWorkHours, Gproject.Services.WorkHoursService>();
-
-
-
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
