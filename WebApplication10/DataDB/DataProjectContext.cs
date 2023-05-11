@@ -27,6 +27,9 @@ namespace Gproject.DataDB
         public virtual DbSet<TblSpecialEvent> TblSpecialEvents { get; set; }
         public virtual DbSet<TblTreat> TblTreats { get; set; }
         public virtual DbSet<TblWorkHour> TblWorkHours { get; set; }
+        public virtual DbSet<Tblattendance> Tblattendance { get; set; }
+
+
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
@@ -272,6 +275,24 @@ namespace Gproject.DataDB
                     .HasColumnName("Id_work_hours");
 
                 entity.Property(e => e.IdEmployee).HasColumnName("Id_employee");
+            });
+
+            modelBuilder.Entity<Tblattendance>(entity =>
+            {
+                entity.HasKey(e => e.id_attendance)
+                    .HasName("PK__Tblattendance__46CA677C95FF13E0");
+
+                entity.ToTable("Tblattendance");
+
+                entity.Property(e => e.id_attendance)
+                    .ValueGeneratedNever()
+                    .HasColumnName("id_attendance");
+
+                entity.Property(e => e.Id_employee).HasColumnName("Id_employee");
+                entity.Property(e => e.Date).HasColumnType("datetime");
+                entity.Property(e => e.TimeEnter).HasColumnType("datetime");
+                entity.Property(e => e.TimeExit).HasColumnType("datetime");
+
             });
 
             OnModelCreatingPartial(modelBuilder);

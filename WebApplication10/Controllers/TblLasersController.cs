@@ -7,6 +7,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Gproject.DataDB;
 using Gproject.Interfaces;
+using Gproject.Controllers;
+using Gproject.Models;
 
 namespace WebApplication10.Controllers
 {
@@ -16,6 +18,8 @@ namespace WebApplication10.Controllers
     {
 
         private readonly ILasers _laserService;
+
+
 
         public TblLasersController(ILasers laserService)
         {
@@ -88,5 +92,22 @@ namespace WebApplication10.Controllers
             }
             return NoContent();
         }
+
+        [HttpGet]
+        [Route("/tryg")]
+        public IQueryable<LaserModels> tryg()
+        {
+            //Task<ActionResult> laserRes = null;
+            //try
+            //{
+            //    laserRes =  ;
+            //}
+            //catch (Exception ex)
+            //{
+            //  throw new Exception($"{ex.Message} נךש נךש ש");
+            //}
+            return _laserService.laserDatails();
+        }
+
     }
 }

@@ -6,6 +6,8 @@ using System.Threading.Tasks;
 using System;
 using Gproject.Interfaces;
 using System.Linq;
+using Gproject.Services;
+using Gproject.Models;
 
 namespace Gproject.Services
 {
@@ -101,5 +103,15 @@ namespace Gproject.Services
         {
             return _context.TblLasers.FirstOrDefault(c => c.IdLaser == id);
         }
-    }
+
+        public IQueryable<LaserModels> laserDatails() {
+            var query = from l in _context.TblLasers 
+                        join c in _context.Contacts
+                            on l.IdContacts equals c.IdContacts
+                        select new LaserModels( l.IdLaser, c.FirstName, c.LastName, c.NumberPhone, l.Ms, l.Date, l.SpotSize, l.Area, l.Energy, l.Reaction );
+            
+            return  query;
+        }
+
+}
 }

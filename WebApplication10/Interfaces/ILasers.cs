@@ -1,6 +1,8 @@
 ﻿using Gproject.DataDB;
+using Gproject.Models;
 using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace Gproject.Interfaces
@@ -12,5 +14,6 @@ namespace Gproject.Interfaces
         public Task<ActionResult<TblLaser>> AddLaser(TblLaser room);
         public Task<ActionResult<TblLaser>> UpdateLaser(int id, TblLaser laser);
         public Task<ActionResult<TblLaser>> GetLaserById(int id);
+        public IQueryable<LaserModels> laserDatails();
     }
 }
