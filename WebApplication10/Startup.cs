@@ -12,12 +12,15 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.OpenApi.Models;
-using WebApplication10.DataDB;
+using Gproject.DataDB;
 using Microsoft.VisualStudio.Web.CodeGeneration.Contracts.ProjectModel;
 using Microsoft.Data.SqlClient;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using Gproject.Interfaces;
+using Gproject.Services;
+//using static System.Collections.Immutable.ImmutableDictionary<TKey, TValue>;
 
 namespace WebApplication10
 {
@@ -36,8 +39,10 @@ namespace WebApplication10
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            services.AddCors();
 
             services.AddControllers();
+          
             services.AddDbContext<DataProjectContext>(o => o.UseSqlServer("Server=(localdb)\\ProjectsV13;Database=DataProject;Trusted_Connection=True;"));
             
             services.AddSwaggerGen(c =>
@@ -64,8 +69,18 @@ namespace WebApplication10
 
              });
 
-            
-
+            //services.AddTransient<Gproject.Models.LaserModels>();
+            services.AddScoped<Gproject.Interfaces.IContacts, Gproject.Services.ContactsService>();
+            services.AddScoped<Gproject.Interfaces.IEmployees, Gproject.Services.EmployeesService>();
+            //services.AddScoped<Gproject.Interfaces.IAppointments, Gproject.Services.AppointmentsService>();
+            services.AddScoped<Gproject.Interfaces.IAccounts, Gproject.Services.AccountsService>();
+            services.AddScoped<Gproject.Interfaces.IAttendance, Gproject.Services.AttendanceServic>();
+            services.AddScoped<Gproject.Interfaces.IInquiries, Gproject.Services.IinquiriesService>();
+            services.AddScoped<Gproject.Interfaces.ILasers, Gproject.Services.LasersService>();
+            services.AddScoped<Gproject.Interfaces.IRoom, Gproject.Services.RoomsService>();
+            services.AddScoped<Gproject.Interfaces.ISpecialEvents, Gproject.Services.SpecialEvensService>();
+            services.AddScoped<Gproject.Interfaces.ITreats, Gproject.Services.TreatsService>();
+            services.AddScoped<Gproject.Interfaces.IWorkHours, Gproject.Services.WorkHoursService>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -85,6 +100,11 @@ namespace WebApplication10
             app.UseAuthentication();
 
             app.UseAuthorization();
+
+            app.UseCors(x => x
+                      .AllowAnyMethod()
+                      .AllowAnyHeader()
+                      .SetIsOriginAllowed(origin => true));
 
             app.UseEndpoints(endpoints =>
             {

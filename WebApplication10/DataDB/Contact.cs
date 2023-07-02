@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 #nullable disable
 
-namespace WebApplication10.DataDB
+namespace Gproject.DataDB
 {
     public partial class Contact
     {

@@ -5,7 +5,8 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using WebApplication10.DataDB;
+using Gproject.DataDB;
+using Gproject.Interfaces;
 
 namespace WebApplication10.Controllers
 {
@@ -13,109 +14,79 @@ namespace WebApplication10.Controllers
     [ApiController]
     public class TblWorkHoursController : ControllerBase
     {
-        private readonly DataProjectContext _context;
 
-        public TblWorkHoursController(DataProjectContext context)
+        private readonly IWorkHours _WorkHoursService;
+
+        public TblWorkHoursController(IWorkHours WorkHoursService)
         {
-            _context = context;
+            _WorkHoursService = WorkHoursService;
         }
 
-        // GET: api/TblWorkHours
+        // GET: api/TblWorkHour
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<TblWorkHour>>> GetTblWorkHours()
+        public async Task<ActionResult<IEnumerable<TblWorkHour>>> GetWorkHours()
         {
-            return await _context.TblWorkHours.ToListAsync();
+            return await _WorkHoursService.GetAllWorkHours();
         }
 
-        // GET: api/TblWorkHours/5
+        // GET: api/TblWorkHour/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<TblWorkHour>> GetTblWorkHour(int id)
+        public async Task<ActionResult<TblWorkHour>> GetWorkHour(int id)
         {
-            var tblWorkHour = await _context.TblWorkHours.FindAsync(id);
+            var workHour = await _WorkHoursService.GetWorkHourById(id);
+            return workHour == null ? NotFound() : Ok(workHour);
 
-            if (tblWorkHour == null)
-            {
-                return NotFound();
-            }
-
-            return tblWorkHour;
         }
 
-        // PUT: api/TblWorkHours/5
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
+        // PUT: api/TblWorkHour/5
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutTblWorkHour(int id, TblWorkHour tblWorkHour)
+        public async Task<IActionResult> UpdateWorkHour(int id, TblWorkHour workHour)
         {
-            if (id != tblWorkHour.IdWorkHours)
-            {
-                return BadRequest();
-            }
-
-            _context.Entry(tblWorkHour).State = EntityState.Modified;
-
             try
             {
-                await _context.SaveChangesAsync();
+                await _WorkHoursService.UpdateWorkHour(id, workHour);
             }
             catch (DbUpdateConcurrencyException)
             {
-                if (!TblWorkHourExists(id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
+                throw new Exception("This it not upDate ");
             }
 
             return NoContent();
         }
 
-        // POST: api/TblWorkHours
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
+        // POST: api/TblWorkHour
         [HttpPost]
-        public async Task<ActionResult<TblWorkHour>> PostTblWorkHour(TblWorkHour tblWorkHour)
+        public async Task<ActionResult<TblWorkHour>> AddWorkHour(TblWorkHour workHour)
         {
-            _context.TblWorkHours.Add(tblWorkHour);
             try
             {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateException)
-            {
-                if (TblWorkHourExists(tblWorkHour.IdWorkHours))
+                ActionResult<TblWorkHour> workHourRes = await _WorkHoursService.AddWorkHour(workHour);
+
+                if (workHourRes == null)
                 {
                     return Conflict();
                 }
-                else
-                {
-                    throw;
-                }
+                return CreatedAtAction("AddWorkHour", new { id = workHour.IdWorkHours }, workHour);
             }
-
-            return CreatedAtAction("GetTblWorkHour", new { id = tblWorkHour.IdWorkHours }, tblWorkHour);
-        }
-
-        // DELETE: api/TblWorkHours/5
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteTblWorkHour(int id)
-        {
-            var tblWorkHour = await _context.TblWorkHours.FindAsync(id);
-            if (tblWorkHour == null)
+            catch (DbUpdateException)
             {
-                return NotFound();
+                return BadRequest("Not successful to Add");
             }
-
-            _context.TblWorkHours.Remove(tblWorkHour);
-            await _context.SaveChangesAsync();
-
-            return NoContent();
         }
 
-        private bool TblWorkHourExists(int id)
+        // DELETE: api/TblWorkHour/5
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteWorkHour(int id)
         {
-            return _context.TblWorkHours.Any(e => e.IdWorkHours == id);
+            try
+            {
+                await _WorkHoursService.DeleteWorkHour(id);
+            }
+            catch (DbUpdateException)
+            {
+                return BadRequest("not succefull to delete");
+            }
+            return NoContent();
         }
     }
 }

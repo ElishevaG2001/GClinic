@@ -5,7 +5,8 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using WebApplication10.DataDB;
+using Gproject.DataDB;
+using Gproject.Interfaces;
 
 namespace WebApplication10.Controllers
 {
@@ -13,109 +14,79 @@ namespace WebApplication10.Controllers
     [ApiController]
     public class TblInquiriesController : ControllerBase
     {
-        private readonly DataProjectContext _context;
 
-        public TblInquiriesController(DataProjectContext context)
+        private readonly IInquiries _inquriyService;
+
+        public TblInquiriesController(IInquiries inquriyService)
         {
-            _context = context;
+            _inquriyService = inquriyService;
         }
 
-        // GET: api/TblInquiries
+        // GET: api/TblInquiry
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<TblInquiry>>> GetTblInquiries()
+        public async Task<ActionResult<IEnumerable<TblInquiry>>> GetInquirys()
         {
-            return await _context.TblInquiries.ToListAsync();
+            return await _inquriyService.GetAllInquirys();
         }
 
-        // GET: api/TblInquiries/5
+        // GET: api/TblInquiry/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<TblInquiry>> GetTblInquiry(int id)
+        public async Task<ActionResult<TblInquiry>> GetTblInquiryById(int id)
         {
-            var tblInquiry = await _context.TblInquiries.FindAsync(id);
+            var inquiry = await _inquriyService.GetInquiryById(id);
+            return inquiry == null ? NotFound() : Ok(inquiry);
 
-            if (tblInquiry == null)
-            {
-                return NotFound();
-            }
-
-            return tblInquiry;
         }
 
-        // PUT: api/TblInquiries/5
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
+        // PUT: api/TblInquiry/5
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutTblInquiry(int id, TblInquiry tblInquiry)
+        public async Task<IActionResult> UpdateInquiry(int id, TblInquiry inquiry)
         {
-            if (id != tblInquiry.IdInquirie)
-            {
-                return BadRequest();
-            }
-
-            _context.Entry(tblInquiry).State = EntityState.Modified;
-
             try
             {
-                await _context.SaveChangesAsync();
+                await _inquriyService.UpdateInquiry(id, inquiry);
             }
             catch (DbUpdateConcurrencyException)
             {
-                if (!TblInquiryExists(id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
+                throw new Exception("This it not upDate ");
             }
 
             return NoContent();
         }
 
-        // POST: api/TblInquiries
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
+        // POST: api/TblInquiry
         [HttpPost]
-        public async Task<ActionResult<TblInquiry>> PostTblInquiry(TblInquiry tblInquiry)
+        public async Task<ActionResult<TblInquiry>> AddInquiry(TblInquiry inquiry)
         {
-            _context.TblInquiries.Add(tblInquiry);
             try
             {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateException)
-            {
-                if (TblInquiryExists(tblInquiry.IdInquirie))
+                ActionResult<TblInquiry> inquiryRes = await _inquriyService.AddInquiry(inquiry);
+
+                if (inquiryRes== null)
                 {
                     return Conflict();
                 }
-                else
-                {
-                    throw;
-                }
+                return CreatedAtAction("AddInquiry", new { id = inquiry.IdInquirie }, inquiry);
             }
-
-            return CreatedAtAction("GetTblInquiry", new { id = tblInquiry.IdInquirie }, tblInquiry);
-        }
-
-        // DELETE: api/TblInquiries/5
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteTblInquiry(int id)
-        {
-            var tblInquiry = await _context.TblInquiries.FindAsync(id);
-            if (tblInquiry == null)
+            catch (DbUpdateException)
             {
-                return NotFound();
+                return BadRequest("Not successful to Add");
             }
-
-            _context.TblInquiries.Remove(tblInquiry);
-            await _context.SaveChangesAsync();
-
-            return NoContent();
         }
 
-        private bool TblInquiryExists(int id)
+        // DELETE: api/TblInquiry/5
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteInquiry(int id)
         {
-            return _context.TblInquiries.Any(e => e.IdInquirie == id);
+            try
+            {
+                await _inquriyService.DeleteInquiry(id);
+            }
+            catch (DbUpdateException)
+            {
+                return BadRequest("not succefull to delete");
+            }
+            return NoContent();
         }
     }
 }

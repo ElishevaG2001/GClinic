@@ -5,7 +5,8 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using WebApplication10.DataDB;
+using Gproject.DataDB;
+using Gproject.Interfaces;
 
 namespace WebApplication10.Controllers
 {
@@ -13,109 +14,79 @@ namespace WebApplication10.Controllers
     [ApiController]
     public class TblSpecialEventsController : ControllerBase
     {
-        private readonly DataProjectContext _context;
 
-        public TblSpecialEventsController(DataProjectContext context)
+        private  ISpecialEvents _specialEventService;
+
+        public TblSpecialEventsController(ISpecialEvents specialEventService)
         {
-            _context = context;
+            _specialEventService = specialEventService;
         }
 
-        // GET: api/TblSpecialEvents
+        // GET: api/TblSpecialEvent
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<TblSpecialEvent>>> GetTblSpecialEvents()
+        public async Task<ActionResult<IEnumerable<TblSpecialEvent>>> GetSpecialEvent()
         {
-            return await _context.TblSpecialEvents.ToListAsync();
+            return await _specialEventService.GetAllSpecialEvents();
         }
 
-        // GET: api/TblSpecialEvents/5
+        // GET: api/TblSpecialEvent/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<TblSpecialEvent>> GetTblSpecialEvent(int id)
+        public async Task<ActionResult<TblSpecialEvent>> GetSpecialEventById(int id)
         {
-            var tblSpecialEvent = await _context.TblSpecialEvents.FindAsync(id);
+            var specialEvent = await _specialEventService.GetSpecialEventById(id);
+            return specialEvent == null ? NotFound() : Ok(specialEvent);
 
-            if (tblSpecialEvent == null)
-            {
-                return NotFound();
-            }
-
-            return tblSpecialEvent;
         }
 
-        // PUT: api/TblSpecialEvents/5
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
+        // PUT: api/TblSpecialEvent/5
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutTblSpecialEvent(int id, TblSpecialEvent tblSpecialEvent)
+        public async Task<IActionResult> UpdateSpecialEvent(int id, TblSpecialEvent specialEvent)
         {
-            if (id != tblSpecialEvent.IdSpecialEvents)
-            {
-                return BadRequest();
-            }
-
-            _context.Entry(tblSpecialEvent).State = EntityState.Modified;
-
             try
             {
-                await _context.SaveChangesAsync();
+                await _specialEventService.UpdateSpecialEvent(id, specialEvent);
             }
             catch (DbUpdateConcurrencyException)
             {
-                if (!TblSpecialEventExists(id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
+                throw new Exception("This it not upDate ");
             }
 
             return NoContent();
         }
 
-        // POST: api/TblSpecialEvents
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
+        // POST: api/TblSpecialEvent
         [HttpPost]
-        public async Task<ActionResult<TblSpecialEvent>> PostTblSpecialEvent(TblSpecialEvent tblSpecialEvent)
+        public async Task<ActionResult<TblSpecialEvent>> AddSpecialEvent(TblSpecialEvent specialEvent)
         {
-            _context.TblSpecialEvents.Add(tblSpecialEvent);
             try
             {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateException)
-            {
-                if (TblSpecialEventExists(tblSpecialEvent.IdSpecialEvents))
+                ActionResult<TblSpecialEvent> specialEventRes = await _specialEventService.AddSpecialEvent(specialEvent);
+
+                if (specialEvent == null)
                 {
                     return Conflict();
                 }
-                else
-                {
-                    throw;
-                }
+                return CreatedAtAction("AddSpecialEvent", new { id =    specialEvent.IdSpecialEvents }, specialEvent);
             }
-
-            return CreatedAtAction("GetTblSpecialEvent", new { id = tblSpecialEvent.IdSpecialEvents }, tblSpecialEvent);
-        }
-
-        // DELETE: api/TblSpecialEvents/5
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteTblSpecialEvent(int id)
-        {
-            var tblSpecialEvent = await _context.TblSpecialEvents.FindAsync(id);
-            if (tblSpecialEvent == null)
+            catch (DbUpdateException)
             {
-                return NotFound();
+                return BadRequest("Not successful to Add");
             }
-
-            _context.TblSpecialEvents.Remove(tblSpecialEvent);
-            await _context.SaveChangesAsync();
-
-            return NoContent();
         }
 
-        private bool TblSpecialEventExists(int id)
+        // DELETE: api/TblSpecialEvent/5
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteSpecialEvent(int id)
         {
-            return _context.TblSpecialEvents.Any(e => e.IdSpecialEvents == id);
+            try
+            {
+                await _specialEventService.DeleteSpecialEvent(id);
+            }
+            catch (DbUpdateException)
+            {
+                return BadRequest("not succefull to delete");
+            }
+            return NoContent();
         }
     }
 }
